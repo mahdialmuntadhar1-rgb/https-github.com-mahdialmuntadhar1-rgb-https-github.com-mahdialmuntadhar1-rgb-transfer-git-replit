@@ -1,0 +1,5 @@
+{
+  "name": "Iraq Compass — دليل العراق",
+  "description": "Discover Iraq — Every City, Every Category, Every Business. A comprehensive directory for businesses and services across Iraq.",
+  "requestFramePermissions": ["geolocation"]
+}
