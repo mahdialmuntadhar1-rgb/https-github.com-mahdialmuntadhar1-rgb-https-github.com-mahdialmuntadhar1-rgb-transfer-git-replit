@@ -24,7 +24,32 @@ import {
   Car,
   Briefcase,
   Compass,
-  Globe2
+  Globe2,
+  Mail,
+  ExternalLink,
+  ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  User,
+  Lock,
+  UserPlus,
+  ShieldCheck,
+  Loader2,
+  Home,
+  ListChecks,
+  PlusSquare,
+  BarChart3,
+  Settings,
+  LogOut,
+  TrendingUp,
+  Eye as EyeIcon,
+  MousePointer2,
+  Users,
+  Pencil,
+  Trash2,
+  Filter
 } from 'lucide-react';
 import styles from './App.module.css';
 
@@ -39,9 +64,13 @@ interface Business {
   city_id: string;
   address: string;
   phone: string;
+  email?: string;
   website: string;
   rating: number;
   image_url: string;
+  opening_hours?: string;
+  is_verified?: boolean;
+  owner_id?: string;
   created_at: string;
 }
 
@@ -50,6 +79,7 @@ interface Category {
   name: string;
   name_ar: string;
   icon: string;
+  color?: string;
 }
 
 interface City {
@@ -58,70 +88,396 @@ interface City {
   name_ar: string;
 }
 
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  'restaurants': <Utensils size={24} />,
-  'hotels': <Hotel size={24} />,
-  'shopping': <ShoppingBag size={24} />,
-  'health': <Stethoscope size={24} />,
-  'automotive': <Car size={24} />,
-  'services': <Briefcase size={24} />,
-  'default': <Building2 size={24} />
-};
+const MOCK_CATEGORIES: Category[] = [
+  { id: '1', name: 'Restaurants', name_ar: 'مطاعم', icon: '🍽️', color: 'rgba(239, 68, 68, 0.1)' },
+  { id: '2', name: 'Cafes', name_ar: 'مقاهي', icon: '☕', color: 'rgba(120, 113, 108, 0.1)' },
+  { id: '3', name: 'Hotels', name_ar: 'فنادق', icon: '🏨', color: 'rgba(59, 130, 246, 0.1)' },
+  { id: '4', name: 'Healthcare', name_ar: 'صحة', icon: '🏥', color: 'rgba(16, 185, 129, 0.1)' },
+  { id: '5', name: 'Pharmacies', name_ar: 'صيدليات', icon: '💊', color: 'rgba(245, 158, 11, 0.1)' },
+  { id: '6', name: 'Education', name_ar: 'تعليم', icon: '🎓', color: 'rgba(139, 92, 246, 0.1)' },
+  { id: '7', name: 'Shopping', name_ar: 'تسوق', icon: '🛍️', color: 'rgba(236, 72, 153, 0.1)' },
+  { id: '8', name: 'Technology', name_ar: 'تقنية', icon: '💻', color: 'rgba(6, 182, 212, 0.1)' },
+  { id: '9', name: 'Banks', name_ar: 'بنوك', icon: '🏦', color: 'rgba(71, 85, 105, 0.1)' },
+  { id: '10', name: 'Construction', name_ar: 'إنشاءات', icon: '🏗️', color: 'rgba(217, 119, 6, 0.1)' },
+  { id: '11', name: 'Transport', name_ar: 'نقل', icon: '🚗', color: 'rgba(107, 114, 128, 0.1)' },
+  { id: '12', name: 'Beauty', name_ar: 'تجميل', icon: '💇', color: 'rgba(219, 39, 119, 0.1)' },
+  { id: '13', name: 'Fitness', name_ar: 'رياضة', icon: '💪', color: 'rgba(34, 197, 94, 0.1)' },
+  { id: '14', name: 'Legal', name_ar: 'قانوني', icon: '⚖️', color: 'rgba(79, 70, 229, 0.1)' },
+  { id: '15', name: 'Media', name_ar: 'إعلام', icon: '📡', color: 'rgba(244, 63, 94, 0.1)' },
+  { id: '16', name: 'Other', name_ar: 'أخرى', icon: '🏢', color: 'rgba(100, 116, 139, 0.1)' },
+];
+
+const MOCK_CITIES: City[] = [
+  { id: '1', name: 'Baghdad', name_ar: 'بغداد' },
+  { id: '2', name: 'Basra', name_ar: 'البصرة' },
+  { id: '3', name: 'Nineveh', name_ar: 'نينوى' },
+  { id: '4', name: 'Erbil', name_ar: 'أربيل' },
+  { id: '5', name: 'Sulaymaniyah', name_ar: 'السليمانية' },
+  { id: '6', name: 'Kirkuk', name_ar: 'كركوك' },
+  { id: '7', name: 'Duhok', name_ar: 'دهوك' },
+  { id: '8', name: 'Anbar', name_ar: 'الأنبار' },
+  { id: '9', name: 'Diyala', name_ar: 'ديالى' },
+  { id: '10', name: 'Babil', name_ar: 'بابل' },
+  { id: '11', name: 'Karbala', name_ar: 'كربلاء' },
+  { id: '12', name: 'Najaf', name_ar: 'النجف' },
+  { id: '13', name: 'Wasit', name_ar: 'واسط' },
+  { id: '14', name: 'Maysan', name_ar: 'ميسان' },
+  { id: '15', name: 'Dhi Qar', name_ar: 'ذي قار' },
+  { id: '16', name: 'Muthanna', name_ar: 'المثنى' },
+  { id: '17', name: 'Qadisiyyah', name_ar: 'القادسية' },
+  { id: '18', name: 'Saladin', name_ar: 'صلاح الدين' },
+];
 
 export default function App() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [view, setView] = useState<'home' | 'list' | 'detail'>('home');
+  const [view, setView] = useState<'home' | 'list' | 'detail' | 'register' | 'login' | 'dashboard'>('home');
+  const [dashboardSection, setDashboardSection] = useState<'overview' | 'listings' | 'add' | 'analytics' | 'settings'>('overview');
+  const [dashboardSearch, setDashboardSearch] = useState('');
+  const [dashboardStatusFilter, setDashboardStatusFilter] = useState<'all' | 'active' | 'pending'>('all');
+  const [dashboardCategoryFilter, setDashboardCategoryFilter] = useState('all');
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+
+  // Form State for Add/Edit Business
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [editingBusinessId, setEditingBusinessId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    name_ar: '',
+    category_id: MOCK_CATEGORIES[0].id,
+    city_id: MOCK_CITIES[0].id,
+    phone: '',
+    email: '',
+    website: '',
+    address: '',
+    description: '',
+    description_ar: '',
+    opening_hours: '',
+    image_url: ''
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loginForm, setLoginForm] = useState({ email: '', password: '', rememberMe: false });
+  const [loginError, setLoginError] = useState('');
+  const [regForm, setRegForm] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phone: '',
+    city: '',
+    businessName: '',
+    role: 'User'
+  });
+  const [regErrors, setRegErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
+
+  const validateRegField = (name: string, value: string) => {
+    let error = '';
+    if (name === 'fullName' && value.length > 0 && value.length < 3) error = 'Name too short';
+    if (name === 'email' && value.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email';
+    if (name === 'password' && value.length > 0 && value.length < 8) error = 'Min 8 characters';
+    if (name === 'confirmPassword' && value.length > 0 && value !== regForm.password) error = 'Passwords do not match';
+    if (name === 'phone' && value.length > 0 && !/^\+?[\d\s-]{10,}$/.test(value)) error = 'Invalid phone';
+    if (name === 'city' && !value) error = 'Required';
+    
+    setRegErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { score: 0, label: '', color: 'transparent' };
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 1) return { score: 25, label: 'Weak', color: '#ef4444' };
+    if (score <= 3) return { score: 60, label: 'Medium', color: '#f59e0b' };
+    return { score: 100, label: 'Strong', color: '#10b981' };
+  };
+
+  const isRegFormValid = () => {
+    const requiredFields = ['fullName', 'email', 'password', 'confirmPassword', 'phone', 'city'];
+    const hasAllFields = requiredFields.every(f => regForm[f as keyof typeof regForm].length > 0);
+    const hasNoErrors = Object.values(regErrors).every(e => !e);
+    return hasAllFields && hasNoErrors;
+  };
+
+  const isBusinessOwner = user?.user_metadata?.role === 'Business Owner';
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isRegFormValid()) {
+      setAuthLoading(true);
+      try {
+        const { error } = await supabase.auth.signUp({
+          email: regForm.email,
+          password: regForm.password,
+          options: {
+            data: {
+              full_name: regForm.fullName,
+              phone: regForm.phone,
+              city: regForm.city,
+              role: regForm.role,
+              business_name: regForm.businessName
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        setRegistrationSuccess(true);
+        setTimeout(() => {
+          setRegistrationSuccess(false);
+          setView('home');
+        }, 3000);
+      } catch (error: any) {
+        alert(error.message || 'Registration failed');
+      } finally {
+        setAuthLoading(false);
+      }
+    }
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setLoginError('');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginForm.email,
+        password: loginForm.password,
+      });
+
+      if (error) throw error;
+      
+      setView('home');
+    } catch (error: any) {
+      setLoginError(error.message || 'Login failed');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setView('home');
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEdit = (business: Business) => {
+    setEditingBusinessId(business.id);
+    setFormData({
+      name: business.name,
+      name_ar: business.name_ar,
+      category_id: business.category_id,
+      city_id: business.city_id,
+      phone: business.phone,
+      email: business.email || '',
+      website: business.website,
+      address: business.address,
+      description: business.description,
+      description_ar: business.description_ar,
+      opening_hours: business.opening_hours || '',
+      image_url: business.image_url
+    });
+    setImagePreview(business.image_url);
+    setDashboardSection('add');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setFormLoading(true);
+    setFormError(null);
+
+    try {
+      let finalImageUrl = formData.image_url;
+
+      // 1. Upload image if a new one was selected
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `business-images/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('images')
+          .getPublicUrl(filePath);
+        
+        finalImageUrl = publicUrl;
+      }
+
+      const businessData = {
+        ...formData,
+        image_url: finalImageUrl,
+        owner_id: user.id,
+        rating: 0,
+        is_verified: false // New listings are pending by default
+      };
+
+      if (editingBusinessId) {
+        const { error } = await supabase
+          .from('businesses')
+          .update(businessData)
+          .eq('id', editingBusinessId);
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('businesses')
+          .insert([businessData]);
+        
+        if (error) throw error;
+      }
+
+      // Reset form and refresh data
+      setDashboardSection('listings');
+      setEditingBusinessId(null);
+      setFormData({
+        name: '',
+        name_ar: '',
+        category_id: MOCK_CATEGORIES[0].id,
+        city_id: MOCK_CITIES[0].id,
+        phone: '',
+        email: '',
+        website: '',
+        address: '',
+        description: '',
+        description_ar: '',
+        opening_hours: '',
+        image_url: ''
+      });
+      setImageFile(null);
+      setImagePreview(null);
+      
+      // Refresh businesses
+      const { data } = await supabase.from('businesses').select('*');
+      if (data) setBusinesses(data);
+
+    } catch (error: any) {
+      setFormError(error.message);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      setBusinesses(businesses.filter(b => b.id !== id));
+    } catch (error: any) {
+      alert('Error deleting business: ' + error.message);
+    }
+  };
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [language, setLanguage] = useState<'EN' | 'AR'>('EN');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 24;
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     fetchInitialData();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedCity]);
+
+  const resultsRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (view === 'list' && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [currentPage, view]);
+
   const fetchInitialData = async () => {
     try {
       setLoading(true);
+      setLoadingProgress(0);
+
+      // 1. Fetch Categories & Cities (Standard)
+      const { data: catData } = await supabase.from('categories').select('*');
+      const { data: cityData } = await supabase.from('cities').select('*');
       
-      const { data: catData, error: catError } = await supabase.from('categories').select('*');
-      const { data: cityData, error: cityError } = await supabase.from('cities').select('*');
+      if (catData && catData.length > 0) {
+        setCategories(catData);
+      } else {
+        setCategories(MOCK_CATEGORIES);
+      }
+
+      if (cityData && cityData.length > 0) {
+        setCities(cityData);
+      } else {
+        setCities(MOCK_CITIES);
+      }
+
+      // 2. Auto-detect Table Name
+      const tableNames = ['businesses', 'listings', 'companies', 'directory', 'places'];
+      let activeTable = '';
       
-      if (catError || cityError) {
-        console.warn('Could not fetch from Supabase. Using mock data for demo.');
-        setCategories([
-          { id: '1', name: 'Restaurants', name_ar: 'مطاعم', icon: 'restaurants' },
-          { id: '2', name: 'Hotels', name_ar: 'فنادق', icon: 'hotels' },
-          { id: '3', name: 'Shopping', name_ar: 'تسوق', icon: 'shopping' },
-          { id: '4', name: 'Health', name_ar: 'صحة', icon: 'health' },
-          { id: '5', name: 'Services', name_ar: 'خدمات', icon: 'services' },
-        ]);
-        setCities([
-          { id: '1', name: 'Baghdad', name_ar: 'بغداد' },
-          { id: '2', name: 'Basra', name_ar: 'البصرة' },
-          { id: '3', name: 'Nineveh', name_ar: 'نينوى' },
-          { id: '4', name: 'Erbil', name_ar: 'أربيل' },
-          { id: '5', name: 'Sulaymaniyah', name_ar: 'السليمانية' },
-          { id: '6', name: 'Kirkuk', name_ar: 'كركوك' },
-          { id: '7', name: 'Duhok', name_ar: 'دهوك' },
-          { id: '8', name: 'Anbar', name_ar: 'الأنبار' },
-          { id: '9', name: 'Diyala', name_ar: 'ديالى' },
-          { id: '10', name: 'Babil', name_ar: 'بابل' },
-          { id: '11', name: 'Karbala', name_ar: 'كربلاء' },
-          { id: '12', name: 'Najaf', name_ar: 'النجف' },
-          { id: '13', name: 'Wasit', name_ar: 'واسط' },
-          { id: '14', name: 'Maysan', name_ar: 'ميسان' },
-          { id: '15', name: 'Dhi Qar', name_ar: 'ذي قار' },
-          { id: '16', name: 'Muthanna', name_ar: 'المثنى' },
-          { id: '17', name: 'Qadisiyyah', name_ar: 'القادسية' },
-          { id: '18', name: 'Saladin', name_ar: 'صلاح الدين' },
-        ]);
-        
+      for (const name of tableNames) {
+        try {
+          const { data, error } = await supabase.from(name).select('*').limit(1);
+          if (!error && data) {
+            activeTable = name;
+            break;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+
+      if (!activeTable) {
+        console.warn('No business table detected in Supabase. Using mock data.');
+        // Fallback to mock data
         setBusinesses([
           {
             id: '1',
@@ -133,6 +489,7 @@ export default function App() {
             city_id: '1',
             address: 'Al-Mansour District, Baghdad',
             phone: '+964 770 123 4567',
+            email: 'info@almansour.iq',
             website: 'https://example.com',
             rating: 4.8,
             image_url: 'https://picsum.photos/seed/food/800/600',
@@ -144,22 +501,85 @@ export default function App() {
             name_ar: 'روتانا أربيل',
             description: 'Luxury hotel with world-class amenities.',
             description_ar: 'فندق فاخر مع مرافق عالمية المستوى.',
-            category_id: '2',
-            city_id: '2',
+            category_id: '3',
+            city_id: '4',
             address: 'Gulan Street, Erbil',
             phone: '+964 66 210 5555',
+            email: 'erbil@rotana.com',
             website: 'https://rotana.com',
             rating: 4.9,
             image_url: 'https://picsum.photos/seed/hotel/800/600',
             created_at: new Date().toISOString()
           }
         ]);
-      } else {
-        setCategories(catData || []);
-        setCities(cityData || []);
-        const { data: busData } = await supabase.from('businesses').select('*');
-        setBusinesses(busData || []);
+        return;
       }
+
+      // 3. Auto-detect Field Names (Mapping)
+      const { data: sample } = await supabase.from(activeTable).select('*').limit(1);
+      const fields = sample?.[0] ? Object.keys(sample[0]) : [];
+      
+      const mapField = (candidates: string[]) => 
+        candidates.find(c => fields.includes(c)) || candidates[0];
+
+      const fieldMap = {
+        name: mapField(['name', 'title', 'business_name', 'company_name']),
+        name_ar: mapField(['name_ar', 'title_ar', 'arabic_name']),
+        category: mapField(['category_id', 'category', 'sector']),
+        city: mapField(['city_id', 'city', 'governorate', 'location']),
+        phone: mapField(['phone', 'telephone', 'contact', 'mobile']),
+        address: mapField(['address', 'location_details', 'street']),
+        description: mapField(['description', 'about', 'info', 'bio']),
+        description_ar: mapField(['description_ar', 'about_ar', 'arabic_description']),
+        email: mapField(['email', 'contact_email']),
+        website: mapField(['website', 'url', 'site', 'link']),
+        image_url: mapField(['image_url', 'photo', 'image', 'cover_photo']),
+        rating: mapField(['rating', 'stars', 'score'])
+      };
+
+      // 4. Batch Fetching (1,000 records at a time)
+      let allBusinesses: Business[] = [];
+      let offset = 0;
+      let hasMore = true;
+      const batchSize = 1000;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from(activeTable)
+          .select('*')
+          .range(offset, offset + batchSize - 1);
+
+        if (error || !data || data.length === 0) {
+          hasMore = false;
+        } else {
+          const mappedData = data.map((item: any) => ({
+            id: item.id || String(Math.random()),
+            name: item[fieldMap.name] || '',
+            name_ar: item[fieldMap.name_ar] || '',
+            description: item[fieldMap.description] || '',
+            description_ar: item[fieldMap.description_ar] || '',
+            category_id: item[fieldMap.category] || '',
+            city_id: item[fieldMap.city] || '',
+            address: item[fieldMap.address] || '',
+            phone: item[fieldMap.phone] || '',
+            website: item[fieldMap.website] || '',
+            rating: Number(item[fieldMap.rating]) || 0,
+            image_url: item[fieldMap.image_url] || '',
+            created_at: item.created_at || new Date().toISOString()
+          }));
+
+          allBusinesses = [...allBusinesses, ...mappedData];
+          offset += batchSize;
+          setLoadingProgress(allBusinesses.length);
+          
+          if (data.length < batchSize) {
+            hasMore = false;
+          }
+        }
+      }
+
+      setBusinesses(allBusinesses);
+
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -175,26 +595,74 @@ export default function App() {
     const matchesSearch = 
       b.name.toLowerCase().includes(searchLower) || 
       b.name_ar.includes(searchQuery) ||
+      b.description.toLowerCase().includes(searchLower) ||
+      b.description_ar.includes(searchQuery) ||
+      b.address.toLowerCase().includes(searchLower) ||
+      b.phone.includes(searchQuery) ||
+      b.website.toLowerCase().includes(searchLower) ||
       (category?.name.toLowerCase().includes(searchLower) ?? false) ||
       (category?.name_ar.includes(searchQuery) ?? false) ||
       (city?.name.toLowerCase().includes(searchLower) ?? false) ||
-      (city?.name_ar.includes(searchQuery) ?? false) ||
-      b.phone.includes(searchQuery);
+      (city?.name_ar.includes(searchQuery) ?? false);
       
     const matchesCategory = !selectedCategory || b.category_id === selectedCategory;
     const matchesCity = !selectedCity || b.city_id === selectedCity;
     return matchesSearch && matchesCategory && matchesCity;
   });
 
-  const handleCategoryClick = (catId: string) => {
-    setSelectedCategory(catId);
-    setView('list');
+  const paginatedBusinesses = filteredBusinesses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredBusinesses.length / itemsPerPage);
+
+  const toArabicNumbers = (num: number | string) => {
+    const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return num.toString().replace(/\d/g, (d) => arabicNumbers[parseInt(d)]);
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 7;
+    
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 4) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
   };
 
   const handleBusinessClick = (business: Business) => {
     setSelectedBusiness(business);
-    setView('detail');
   };
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedBusiness(null);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
 
   const renderHome = () => (
     <div className={styles.container}>
@@ -277,30 +745,46 @@ export default function App() {
         </div>
       </div>
 
-      {/* Categories Grid */}
+      {/* Categories Grid Section */}
       <section id="directory">
         <div className={styles.sectionTitle}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span className={styles.dataLabel}>Sector Analysis</span>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-warm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Browse by Category</h2>
+            <h2 className={styles.categoryHeading}>Browse by Category</h2>
           </div>
-          <span className={styles.arabic} style={{ fontSize: '1.25rem', color: 'var(--brand-gold)' }}>تصفح حسب الفئة</span>
+          <span className={styles.arabic} style={{ fontSize: '1.5rem', color: 'var(--brand-gold)', fontWeight: 'bold' }}>تصفح حسب الفئة</span>
         </div>
-        <div className={styles.grid}>
-          {categories.map((cat) => (
-            <div
-              key={cat.id}
-              onClick={() => handleCategoryClick(cat.id)}
-              className={styles.catCard}
-            >
-              <div className={styles.catIcon}>
-                {CATEGORY_ICONS[cat.icon] || CATEGORY_ICONS['default']}
+        
+        <div className={styles.categoryGrid}>
+          {categories.map((cat) => {
+            const count = businesses.filter(b => 
+              b.category_id === cat.id && 
+              (!selectedCity || b.city_id === selectedCity)
+            ).length;
+            
+            return (
+              <div
+                key={cat.id}
+                onClick={() => {
+                  setSelectedCategory(cat.id);
+                  setView('list');
+                }}
+                className={styles.categoryTile}
+                style={{ '--cat-color': cat.color } as React.CSSProperties}
+              >
+                <div className={styles.categoryIconWrapper}>
+                  <span className={styles.categoryIcon}>{cat.icon}</span>
+                </div>
+                <div className={styles.categoryInfo}>
+                  <span className={styles.categoryNameAr}>{cat.name_ar}</span>
+                  <span className={styles.categoryNameEn}>{cat.name}</span>
+                </div>
+                <div className={styles.categoryBadge}>
+                  {count}
+                </div>
               </div>
-              <div className={styles.dataLabel}>Category ID: {cat.id.padStart(2, '0')}</div>
-              <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'var(--text-warm)', marginBottom: '4px' }}>{cat.name}</span>
-              <span className={`${styles.arabic}`} style={{ fontSize: '0.875rem', color: 'var(--brand-gold)' }}>{cat.name_ar}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -342,149 +826,1108 @@ export default function App() {
     </div>
   );
 
-  const renderList = () => (
-    <div className={styles.container}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '40px', borderBottom: '1px solid var(--border-slate)', paddingBottom: '24px' }}>
-        <button 
-          onClick={() => setView('home')}
-          style={{ background: 'none', border: 'none', color: 'var(--brand-gold)', cursor: 'pointer', textAlign: 'left', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
-          className={styles.mono}
-        >
-          <ChevronRight size={14} style={{ transform: 'rotate(180deg)' }} />
-          <span>Return to Dashboard</span>
-        </button>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <div>
-            <div className={styles.dataLabel}>Query Results</div>
-            <h2 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-warm)', letterSpacing: '-0.02em' }}>
-              {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : 'Global Directory'}
-            </h2>
+  const renderList = () => {
+    const startIdx = (currentPage - 1) * itemsPerPage + 1;
+    const endIdx = Math.min(currentPage * itemsPerPage, filteredBusinesses.length);
+
+    return (
+      <div className={styles.container} ref={resultsRef}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '40px', borderBottom: '1px solid var(--border-slate)', paddingBottom: '24px' }}>
+          <button 
+            onClick={() => setView('home')}
+            style={{ background: 'none', border: 'none', color: 'var(--brand-gold)', cursor: 'pointer', textAlign: 'left', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+            className={styles.mono}
+          >
+            <ChevronRight size={14} style={{ transform: 'rotate(180deg)' }} />
+            <span>Return to Dashboard</span>
+          </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <div className={styles.dataLabel}>Query Results</div>
+              <h2 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-warm)', letterSpacing: '-0.02em' }}>
+                {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : 'Global Directory'}
+              </h2>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div className={styles.dataLabel} style={{ direction: 'rtl', fontSize: '14px', color: 'var(--brand-gold)' }}>
+                عرض {toArabicNumbers(startIdx)}-{toArabicNumbers(endIdx)} من {toArabicNumbers(filteredBusinesses.length)} نتيجة
+              </div>
+              <span className={`${styles.mono}`} style={{ fontSize: '1.25rem', color: 'var(--text-warm)' }}>
+                {filteredBusinesses.length.toString().padStart(3, '0')}
+              </span>
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div className={styles.dataLabel}>Record Count</div>
-            <span className={`${styles.mono}`} style={{ fontSize: '1.25rem', color: 'var(--brand-gold)' }}>
-              {filteredBusinesses.length.toString().padStart(3, '0')}
-            </span>
+        </div>
+
+        <div className={styles.businessGrid}>
+        {paginatedBusinesses.map((business) => {
+          const category = categories.find(c => c.id === business.category_id);
+          const city = cities.find(c => c.id === business.city_id);
+          
+          return (
+            <div
+              key={business.id}
+              className={styles.postcardCard}
+              onClick={() => handleBusinessClick(business)}
+            >
+              <div 
+                className={styles.categoryStripe} 
+                style={{ background: category?.color || 'var(--brand-gold)' }} 
+              />
+              <div className={styles.postcardContent}>
+                <div className={styles.postcardTag}>
+                  <span>{category?.icon}</span>
+                  <span>{category?.name}</span>
+                </div>
+                
+                <h3 className={styles.postcardTitle}>{business.name}</h3>
+                
+                <div className={styles.postcardMeta}>
+                  <div className={styles.postcardLink}>
+                    <MapPin size={14} color="var(--brand-gold)" />
+                    <span>{city?.name}</span>
+                  </div>
+                  
+                  <a 
+                    href={`tel:${business.phone}`} 
+                    className={styles.postcardLink}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Phone size={14} color="var(--brand-gold)" />
+                    <span>{business.phone}</span>
+                  </a>
+
+                  {business.email && (
+                    <a 
+                      href={`mailto:${business.email}`} 
+                      className={styles.postcardLink}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Mail size={14} color="var(--brand-gold)" />
+                      <span>{business.email}</span>
+                    </a>
+                  )}
+
+                  {business.website && (
+                    <a 
+                      href={business.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className={styles.postcardLink}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Globe size={14} color="var(--brand-gold)" />
+                      <span>{business.website.replace(/^https?:\/\//, '')}</span>
+                      <ExternalLink size={10} style={{ marginLeft: '4px', opacity: 0.5 }} />
+                    </a>
+                  )}
+                </div>
+
+                <div className={styles.postcardFooter}>
+                  <div className={styles.viewDetails}>
+                    <span>View Details</span>
+                    <ArrowRight size={14} />
+                  </div>
+                  <div className={styles.viewDetails} style={{ direction: 'rtl' }}>
+                    <span>عرض التفاصيل</span>
+                    <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            className={styles.pageBtn}
+          >
+            ← Previous
+          </button>
+          
+          <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>·</span>
+          
+          <div className={styles.pageNumbers}>
+            {getPageNumbers().map((page, idx) => (
+              <React.Fragment key={idx}>
+                <button
+                  className={`${styles.pageNumber} ${currentPage === page ? styles.pageNumberActive : ''} ${page === '...' ? styles.pageEllipsis : ''}`}
+                  onClick={() => typeof page === 'number' && setCurrentPage(page)}
+                  disabled={page === '...'}
+                >
+                  {page}
+                </button>
+                {idx < getPageNumbers().length - 1 && <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>·</span>}
+              </React.Fragment>
+            ))}
+          </div>
+
+          <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>·</span>
+
+          <button 
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            className={styles.pageBtn}
+          >
+            Next →
+          </button>
+        </div>
+      )}
+    </div>
+    );
+  };
+
+  const renderDashboard = () => {
+    if (!user || !isBusinessOwner) {
+      setView('home');
+      return null;
+    }
+
+    const sidebarItems = [
+      { id: 'overview', label: 'Overview', icon: <Home size={20} />, labelAr: 'نظرة عامة' },
+      { id: 'listings', label: 'My Listings', icon: <ListChecks size={20} />, labelAr: 'قوائمي' },
+      { id: 'add', label: 'Add Business', icon: <PlusSquare size={20} />, labelAr: 'إضافة عمل' },
+      { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={20} />, labelAr: 'التحليلات' },
+      { id: 'settings', label: 'Settings', icon: <Settings size={20} />, labelAr: 'الإعدادات' },
+    ];
+
+    return (
+      <div className={styles.dashboardLayout}>
+        {/* Sidebar */}
+        <aside className={styles.dashboardSidebar}>
+          <div className={styles.sidebarHeader}>
+            <div className={styles.sidebarLogo}>
+              <Compass size={24} color="var(--brand-gold)" />
+              <span>OWNER PORTAL</span>
+            </div>
+          </div>
+          
+          <nav className={styles.sidebarNav}>
+            {sidebarItems.map(item => (
+              <button
+                key={item.id}
+                className={`${styles.sidebarItem} ${dashboardSection === item.id ? styles.sidebarItemActive : ''}`}
+                onClick={() => setDashboardSection(item.id as any)}
+              >
+                {item.icon}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{item.label}</span>
+                  <span style={{ fontSize: '10px', opacity: 0.6 }} className={styles.arabic}>{item.labelAr}</span>
+                </div>
+              </button>
+            ))}
+          </nav>
+
+          <div className={styles.sidebarFooter}>
+            <button className={styles.sidebarLogout} onClick={handleLogout}>
+              <LogOut size={20} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className={styles.dashboardContent}>
+          <header className={styles.dashboardHeader}>
+            <div className={styles.dashboardTitleGroup}>
+              <h1 className={styles.dashboardTitle}>
+                {sidebarItems.find(i => i.id === dashboardSection)?.label}
+              </h1>
+              <p className={styles.dashboardSubtitle}>
+                Welcome back, {user.user_metadata?.full_name || 'Owner'}
+              </p>
+            </div>
+            <div className={styles.dashboardHeaderActions}>
+              <div className={styles.statusBadge}>
+                <div className={styles.statusDot} />
+                <span>SYSTEM ONLINE</span>
+              </div>
+            </div>
+          </header>
+
+          <div className={styles.dashboardScrollArea}>
+            {dashboardSection === 'overview' && (
+              <div className={styles.overviewGrid}>
+                {/* Stats Cards */}
+                <div className={styles.statCard}>
+                  <div className={styles.statHeader}>
+                    <Building2 size={20} color="var(--brand-gold)" />
+                    <span>Total Listings</span>
+                  </div>
+                  <div className={styles.statValue}>1</div>
+                  <div className={styles.statTrend} style={{ color: 'var(--text-muted)' }}>
+                    <span>Active nodes in network</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statHeader}>
+                    <EyeIcon size={20} color="var(--brand-gold)" />
+                    <span>Views (This Month)</span>
+                  </div>
+                  <div className={styles.statValue}>1,284</div>
+                  <div className={styles.statTrend}>
+                    <TrendingUp size={14} />
+                    <span>+12.5% vs last month</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statHeader}>
+                    <Phone size={20} color="var(--brand-gold)" />
+                    <span>Phone Clicks</span>
+                  </div>
+                  <div className={styles.statValue}>84</div>
+                  <div className={styles.statTrend}>
+                    <TrendingUp size={14} />
+                    <span>+3.1% vs last month</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statHeader}>
+                    <CheckCircle2 size={20} color="var(--brand-gold)" />
+                    <span>Profile Completeness</span>
+                  </div>
+                  <div className={styles.statValue}>85%</div>
+                  <div className={styles.statTrend} style={{ color: '#f59e0b' }}>
+                    <span>Add website to reach 100%</span>
+                  </div>
+                </div>
+
+                {/* Recent Activity */}
+                <div className={styles.dashboardSectionCard} style={{ gridColumn: 'span 4' }}>
+                  <h3 className={styles.cardTitle}>Recent Activity Feed</h3>
+                  <div className={styles.activityList}>
+                    <div className={styles.activityItem}>
+                      <div className={styles.activityIcon} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                        <EyeIcon size={14} />
+                      </div>
+                      <div className={styles.activityDetails}>
+                        <p>New view on <strong>Al-Mansour Restaurant</strong> from Baghdad</p>
+                        <span>2 hours ago</span>
+                      </div>
+                    </div>
+                    <div className={styles.activityItem}>
+                      <div className={styles.activityIcon} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                        <Phone size={14} />
+                      </div>
+                      <div className={styles.activityDetails}>
+                        <p>Phone number revealed by user in Erbil</p>
+                        <span>5 hours ago</span>
+                      </div>
+                    </div>
+                    <div className={styles.activityItem}>
+                      <div className={styles.activityIcon} style={{ background: 'rgba(232, 197, 71, 0.1)', color: 'var(--brand-gold)' }}>
+                        <CheckCircle2 size={14} />
+                      </div>
+                      <div className={styles.activityDetails}>
+                        <p>Business profile updated: Added new photos</p>
+                        <span>Yesterday at 14:20</span>
+                      </div>
+                    </div>
+                    <div className={styles.activityItem}>
+                      <div className={styles.activityIcon} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                        <AlertCircle size={14} />
+                      </div>
+                      <div className={styles.activityDetails}>
+                        <p>System Alert: Monthly intelligence report available</p>
+                        <span>2 days ago</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {dashboardSection === 'listings' && (
+              <div className={styles.dashboardSectionCard}>
+                <div className={styles.dashboardSectionHeader}>
+                  <div className={styles.dashboardTitleGroup}>
+                    <h3 className={styles.cardTitle}>My Business Nodes</h3>
+                    <p className={styles.dashboardSubtitle}>Manage and monitor your registered entities</p>
+                  </div>
+                  <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setDashboardSection('add')}>
+                    <PlusSquare size={16} />
+                    <span>Add New Node</span>
+                  </button>
+                </div>
+
+                <div className={styles.dashboardFilters}>
+                  <div className={styles.dashboardSearchBox}>
+                    <Search size={18} />
+                    <input 
+                      type="text" 
+                      placeholder="Search your listings..." 
+                      value={dashboardSearch}
+                      onChange={(e) => setDashboardSearch(e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.dashboardFilterGroup}>
+                    <div className={styles.filterSelect}>
+                      <Filter size={14} />
+                      <select 
+                        value={dashboardStatusFilter}
+                        onChange={(e) => setDashboardStatusFilter(e.target.value as any)}
+                      >
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                      </select>
+                    </div>
+                    <div className={styles.filterSelect}>
+                      <LayoutGrid size={14} />
+                      <select 
+                        value={dashboardCategoryFilter}
+                        onChange={(e) => setDashboardCategoryFilter(e.target.value)}
+                      >
+                        <option value="all">All Categories</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.listingsTableWrapper}>
+                  <div className={styles.listingsTable}>
+                    <div className={styles.tableHeader}>
+                      <span>Business Name</span>
+                      <span>Category</span>
+                      <span>City</span>
+                      <span>Status</span>
+                      <span>Views</span>
+                      <span style={{ textAlign: 'right' }}>Actions</span>
+                    </div>
+                    
+                    {/* Filtered Listings Logic */}
+                    {businesses
+                      .filter(b => {
+                        // In a real app, we'd filter by owner_id here
+                        // For demo, we show all but filter by search/status/category
+                        const matchesSearch = b.name.toLowerCase().includes(dashboardSearch.toLowerCase()) || 
+                                            b.name_ar.includes(dashboardSearch);
+                        const matchesStatus = dashboardStatusFilter === 'all' || 
+                                            (dashboardStatusFilter === 'active' && b.is_verified) ||
+                                            (dashboardStatusFilter === 'pending' && !b.is_verified);
+                        const matchesCategory = dashboardCategoryFilter === 'all' || b.category_id === dashboardCategoryFilter;
+                        
+                        return matchesSearch && matchesStatus && matchesCategory;
+                      })
+                      .map(b => (
+                        <div key={b.id} className={styles.tableRow}>
+                          <div className={styles.tableNameCell}>
+                            <div className={styles.tableAvatar}>{b.name[0]}</div>
+                            <div className={styles.tableNameGroup}>
+                              <span className={styles.tableNameEn}>{b.name}</span>
+                              <span className={styles.tableNameAr}>{b.name_ar}</span>
+                            </div>
+                          </div>
+                          <span className={styles.tableCategory}>
+                            {categories.find(c => c.id === b.category_id)?.name}
+                          </span>
+                          <span className={styles.tableCity}>
+                            {cities.find(c => c.id === b.city_id)?.name}
+                          </span>
+                          <div className={styles.tableStatus}>
+                            <span className={b.is_verified ? styles.badgeActive : styles.badgePending}>
+                              {b.is_verified ? 'Active' : 'Pending'}
+                            </span>
+                          </div>
+                          <span className={styles.tableViews}>1,284</span>
+                          <div className={styles.tableActions}>
+                            <button 
+                              className={styles.iconBtn} 
+                              title="Edit Node"
+                              onClick={() => handleEdit(b)}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button 
+                              className={`${styles.iconBtn} ${styles.iconBtnDelete}`} 
+                              title="Delete Node"
+                              onClick={() => handleDelete(b.id)}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {dashboardSection === 'add' && (
+              <div className={styles.formContainer}>
+                <div className={styles.dashboardSectionCard} style={{ flex: 1 }}>
+                  <h3 className={styles.cardTitle}>
+                    {editingBusinessId ? 'Update Intelligence Node' : 'Initialize New Node'}
+                  </h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '32px' }}>
+                    {editingBusinessId 
+                      ? 'Modify the parameters of an existing entity in the network.' 
+                      : 'Register a new business entity in the Iraq Compass intelligence network.'}
+                  </p>
+
+                  <form onSubmit={handleSubmit}>
+                    <div className={styles.formGrid}>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>Business Name (EN)</label>
+                        <input 
+                          type="text" 
+                          className={styles.formInput} 
+                          placeholder="e.g. Baghdad Tech Hub" 
+                          value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>Business Name (AR)</label>
+                        <input 
+                          type="text" 
+                          className={`${styles.formInput} ${styles.arabic}`} 
+                          placeholder="مثال: مركز بغداد للتقنية" 
+                          value={formData.name_ar}
+                          onChange={(e) => setFormData({...formData, name_ar: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>Category</label>
+                        <select 
+                          className={styles.formInput}
+                          value={formData.category_id}
+                          onChange={(e) => setFormData({...formData, category_id: e.target.value})}
+                        >
+                          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>City</label>
+                        <select 
+                          className={styles.formInput}
+                          value={formData.city_id}
+                          onChange={(e) => setFormData({...formData, city_id: e.target.value})}
+                        >
+                          {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>Phone Number</label>
+                        <input 
+                          type="tel" 
+                          className={styles.formInput} 
+                          placeholder="+964..." 
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>Email Address</label>
+                        <input 
+                          type="email" 
+                          className={styles.formInput} 
+                          placeholder="contact@business.com" 
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>Website URL</label>
+                        <input 
+                          type="url" 
+                          className={styles.formInput} 
+                          placeholder="https://..." 
+                          value={formData.website}
+                          onChange={(e) => setFormData({...formData, website: e.target.value})}
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>Physical Address</label>
+                        <input 
+                          type="text" 
+                          className={styles.formInput} 
+                          placeholder="Street, District, Near..." 
+                          value={formData.address}
+                          onChange={(e) => setFormData({...formData, address: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
+                        <label className={styles.formLabel}>Description (EN)</label>
+                        <textarea 
+                          className={styles.formInput} 
+                          style={{ height: '100px', resize: 'none' }}
+                          placeholder="Tell us about your business..."
+                          value={formData.description}
+                          onChange={(e) => setFormData({...formData, description: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
+                        <label className={styles.formLabel}>Description (AR)</label>
+                        <textarea 
+                          className={`${styles.formInput} ${styles.arabic}`} 
+                          style={{ height: '100px', resize: 'none' }}
+                          placeholder="أخبرنا عن عملك..."
+                          value={formData.description_ar}
+                          onChange={(e) => setFormData({...formData, description_ar: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>Opening Hours</label>
+                        <input 
+                          type="text" 
+                          className={styles.formInput} 
+                          placeholder="e.g. 9:00 AM - 10:00 PM" 
+                          value={formData.opening_hours}
+                          onChange={(e) => setFormData({...formData, opening_hours: e.target.value})}
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>Business Image</label>
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          className={styles.formInput} 
+                          onChange={handleImageChange}
+                        />
+                      </div>
+                    </div>
+
+                    {formError && (
+                      <div className={styles.errorMsg} style={{ marginTop: '20px' }}>
+                        {formError}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+                      <button 
+                        type="submit"
+                        className={`${styles.btn} ${styles.btnPrimary}`} 
+                        style={{ width: '200px' }}
+                        disabled={formLoading}
+                      >
+                        {formLoading ? <Loader2 className={styles.spinner} size={16} /> : (editingBusinessId ? 'UPDATE NODE' : 'DEPLOY NODE')}
+                      </button>
+                      <button 
+                        type="button"
+                        className={`${styles.btn} ${styles.btnOutline}`}
+                        onClick={() => {
+                          setDashboardSection('listings');
+                          setEditingBusinessId(null);
+                        }}
+                      >
+                        CANCEL
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Live Preview */}
+                <div className={styles.previewContainer}>
+                  <h4 className={styles.previewTitle}>Live Intelligence Preview</h4>
+                  <div className={styles.card} style={{ width: '100%', margin: 0 }}>
+                    <div className={styles.cardImageContainer}>
+                      <img 
+                        src={imagePreview || 'https://picsum.photos/seed/business/800/600'} 
+                        alt="Preview" 
+                        className={styles.cardImage}
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className={styles.cardBadge}>
+                        {categories.find(c => c.id === formData.category_id)?.icon} {categories.find(c => c.id === formData.category_id)?.name}
+                      </div>
+                    </div>
+                    <div className={styles.cardContent}>
+                      <div className={styles.cardHeader}>
+                        <h3 className={styles.cardTitleText}>{formData.name || 'Business Name'}</h3>
+                        <div className={styles.cardRating}>
+                          <Star size={14} fill="var(--brand-gold)" color="var(--brand-gold)" />
+                          <span>0.0</span>
+                        </div>
+                      </div>
+                      <p className={styles.cardDescription}>
+                        {formData.description || 'Business description will appear here...'}
+                      </p>
+                      <div className={styles.cardMeta}>
+                        <div className={styles.metaItem}>
+                          <MapPin size={14} />
+                          <span>{cities.find(c => c.id === formData.city_id)?.name}, {formData.address || 'Address'}</span>
+                        </div>
+                        <div className={styles.metaItem}>
+                          <Clock size={14} />
+                          <span>{formData.opening_hours || 'Opening Hours'}</span>
+                        </div>
+                      </div>
+                      <button className={styles.cardBtn}>
+                        VIEW INTELLIGENCE
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles.previewNote}>
+                    <AlertCircle size={14} />
+                    <span>This is how your business will appear in the network.</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {dashboardSection === 'analytics' && (
+              <div className={styles.dashboardSectionCard}>
+                <h3 className={styles.cardTitle}>Network Intelligence</h3>
+                <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px dashed var(--border-slate)' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <BarChart3 size={48} color="var(--brand-gold)" style={{ opacity: 0.5, marginBottom: '16px' }} />
+                    <p style={{ color: 'var(--text-muted)' }}>Detailed analytics engine initializing...</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {dashboardSection === 'settings' && (
+              <div className={styles.dashboardSectionCard} style={{ maxWidth: '600px' }}>
+                <h3 className={styles.cardTitle}>Account Protocols</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div className={styles.settingsItem}>
+                    <div>
+                      <h4 style={{ color: 'var(--text-warm)', marginBottom: '4px' }}>Email Notifications</h4>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Receive weekly intelligence reports</p>
+                    </div>
+                    <input type="checkbox" defaultChecked />
+                  </div>
+                  <div className={styles.settingsItem}>
+                    <div>
+                      <h4 style={{ color: 'var(--text-warm)', marginBottom: '4px' }}>Public Profile</h4>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Allow others to see your owner status</p>
+                    </div>
+                    <input type="checkbox" defaultChecked />
+                  </div>
+                  <button className={`${styles.btn} ${styles.btnDark}`} style={{ width: 'fit-content' }}>
+                    Update Protocols
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    );
+  };
+
+  const renderLogin = () => {
+    return (
+      <div className={styles.container} style={{ padding: '100px 20px' }}>
+        <div className={styles.registerContainer}>
+          <div className={styles.registerHeader}>
+            <div style={{ display: 'inline-flex', padding: '12px', background: 'rgba(232, 197, 71, 0.1)', borderRadius: '50%', marginBottom: '20px', color: 'var(--brand-gold)' }}>
+              <Lock size={32} />
+            </div>
+            <h2 className={styles.registerTitle}>Secure Login</h2>
+            <p className={styles.registerSubtitle}>Enter your credentials to access the network</p>
+          </div>
+
+          {loginError && (
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '12px', borderRadius: '4px', marginBottom: '24px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertCircle size={16} />
+              {loginError}
+            </div>
+          )}
+
+          <form onSubmit={handleLoginSubmit}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>البريد الإلكتروني Email Address</label>
+              <div className={styles.inputWrapper}>
+                <input 
+                  type="email" 
+                  placeholder="user@network.iq"
+                  className={styles.formInput}
+                  value={loginForm.email}
+                  onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>كلمة المرور Password</label>
+              <div className={styles.inputWrapper}>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Enter your password"
+                  className={styles.formInput}
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                  required
+                />
+                <button 
+                  type="button"
+                  className={styles.validationIcon} 
+                  style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={16} color="var(--text-muted)" /> : <Eye size={16} color="var(--text-muted)" />}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
+                <input 
+                  type="checkbox" 
+                  checked={loginForm.rememberMe}
+                  onChange={(e) => setLoginForm({...loginForm, rememberMe: e.target.checked})}
+                />
+                تذكرني / Remember Me
+              </label>
+              <span style={{ fontSize: '13px', color: 'var(--brand-gold)', cursor: 'pointer' }}>Forgot Password?</span>
+            </div>
+
+            <button 
+              type="submit" 
+              className={styles.submitBtn}
+              disabled={authLoading}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+            >
+              {authLoading ? <Loader2 className={styles.spinner} size={20} /> : 'AUTHENTICATE'}
+            </button>
+          </form>
+
+          <div style={{ marginTop: '32px', textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
+            New to the network? <span style={{ color: 'var(--brand-gold)', cursor: 'pointer' }} onClick={() => setView('register')}>Create Account</span>
           </div>
         </div>
       </div>
+    );
+  };
 
-      <div className={styles.businessGrid}>
-        {filteredBusinesses.map((business) => (
-          <div
-            key={business.id}
-            className={styles.businessCard}
-            onClick={() => handleBusinessClick(business)}
-            style={{ border: '1px solid var(--border-slate)' }}
-          >
-            <div style={{ height: '180px', position: 'relative' }}>
-              <img 
-                src={business.image_url} 
-                alt={business.name} 
-                className={styles.businessImg}
-                referrerPolicy="no-referrer"
-              />
-              <div className={styles.mono} style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--bg-deep)', border: '1px solid var(--brand-gold)', color: 'var(--brand-gold)', padding: '4px 8px', borderRadius: '2px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 'bold' }}>
-                <Star size={12} color="var(--brand-gold)" fill="var(--brand-gold)" />
-                {business.rating.toFixed(1)}
-              </div>
-            </div>
-            <div className={styles.businessInfo}>
-              <div className={styles.dataLabel}>Entity: {business.id}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--text-warm)' }}>{business.name}</h3>
-                <span className={styles.arabic} style={{ fontSize: '1rem', color: 'var(--brand-gold)' }}>{business.name_ar}</span>
-              </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '20px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.5' }}>
-                {business.description}
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-teal)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }} className={styles.mono}>
-                <MapPin size={14} />
-                <span>{cities.find(c => c.id === business.city_id)?.name} / NODE_{business.city_id}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderDetail = () => {
-    if (!selectedBusiness) return null;
+  const renderRegister = () => {
+    const strength = getPasswordStrength(regForm.password);
+    
     return (
-      <div className={styles.container} style={{ maxWidth: '1100px' }}>
-        <button 
-          onClick={() => setView('list')}
-          style={{ background: 'none', border: 'none', color: 'var(--brand-gold)', cursor: 'pointer', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
-          className={styles.mono}
-        >
-          <ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} />
-          <span>Back to Query Results</span>
-        </button>
-
-        <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-slate)', overflow: 'hidden' }}>
-          <div style={{ height: '400px', position: 'relative', borderBottom: '1px solid var(--border-slate)' }}>
-            <img 
-              src={selectedBusiness.image_url} 
-              alt={selectedBusiness.name} 
-              style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(0.3)' }}
-              referrerPolicy="no-referrer"
-            />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(5, 8, 10, 0.8))' }} />
+      <div className={styles.container} style={{ padding: '60px 20px' }}>
+        <div className={styles.registerContainer}>
+          <div className={styles.registerHeader}>
+            <div style={{ display: 'inline-flex', padding: '12px', background: 'rgba(232, 197, 71, 0.1)', borderRadius: '50%', marginBottom: '20px', color: 'var(--brand-gold)' }}>
+              <UserPlus size={32} />
+            </div>
+            <h2 className={styles.registerTitle}>Create Account</h2>
+            <p className={styles.registerSubtitle}>Join the Iraq Compass intelligence network</p>
           </div>
-          <div style={{ padding: '48px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '48px' }}>
-              <div>
-                <div className={styles.dataLabel}>Intelligence Node: {selectedBusiness.id}</div>
-                <h1 style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-warm)', letterSpacing: '-0.03em' }}>{selectedBusiness.name}</h1>
-                <h2 className={styles.arabic} style={{ fontSize: '2.5rem', color: 'var(--brand-gold)' }}>{selectedBusiness.name_ar}</h2>
-              </div>
-              <div className={styles.mono} style={{ border: '1px solid var(--brand-gold)', padding: '16px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'rgba(232, 197, 71, 0.05)' }}>
-                <div className={styles.dataLabel} style={{ color: 'var(--brand-gold)' }}>Rating Index</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Star size={24} color="var(--brand-gold)" fill="var(--brand-gold)" />
-                  <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--brand-gold)' }}>{selectedBusiness.rating.toFixed(1)}</span>
+
+          <form onSubmit={handleRegisterSubmit}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>الاسم الكامل Full Name</label>
+              <div className={styles.inputWrapper}>
+                <input 
+                  type="text" 
+                  placeholder="Enter your full name"
+                  className={`${styles.formInput} ${regErrors.fullName ? styles.formInputError : regForm.fullName.length >= 3 ? styles.formInputSuccess : ''}`}
+                  value={regForm.fullName}
+                  onChange={(e) => {
+                    setRegForm({...regForm, fullName: e.target.value});
+                    validateRegField('fullName', e.target.value);
+                  }}
+                />
+                <div className={styles.validationIcon}>
+                  {regErrors.fullName ? <AlertCircle size={18} color="#ef4444" /> : regForm.fullName.length >= 3 ? <CheckCircle2 size={18} color="#10b981" /> : null}
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '64px' }}>
-              <div>
-                <h3 className={styles.dataLabel}>Entity Description</h3>
-                <p style={{ fontSize: '1.125rem', lineHeight: '1.8', color: 'var(--text-warm)', marginBottom: '32px' }}>{selectedBusiness.description}</p>
-                <p className={styles.arabic} style={{ fontSize: '1.5rem', lineHeight: '1.8', color: 'var(--brand-gold)' }}>{selectedBusiness.description_ar}</p>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>البريد الإلكتروني Email Address</label>
+              <div className={styles.inputWrapper}>
+                <input 
+                  type="email" 
+                  placeholder="user@network.iq"
+                  className={`${styles.formInput} ${regErrors.email ? styles.formInputError : regForm.email.includes('@') ? styles.formInputSuccess : ''}`}
+                  value={regForm.email}
+                  onChange={(e) => {
+                    setRegForm({...regForm, email: e.target.value});
+                    validateRegField('email', e.target.value);
+                  }}
+                />
+                <div className={styles.validationIcon}>
+                  {regErrors.email ? <AlertCircle size={18} color="#ef4444" /> : regForm.email.includes('@') ? <CheckCircle2 size={18} color="#10b981" /> : null}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>كلمة المرور Password</label>
+                <div className={styles.inputWrapper}>
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="Min 8 chars"
+                    className={`${styles.formInput} ${regErrors.password ? styles.formInputError : regForm.password.length >= 8 ? styles.formInputSuccess : ''}`}
+                    value={regForm.password}
+                    onChange={(e) => {
+                      setRegForm({...regForm, password: e.target.value});
+                      validateRegField('password', e.target.value);
+                    }}
+                  />
+                  <button 
+                    type="button"
+                    className={styles.validationIcon} 
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', right: '36px' }}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={16} color="var(--text-muted)" /> : <Eye size={16} color="var(--text-muted)" />}
+                  </button>
+                  <div className={styles.validationIcon}>
+                    {regErrors.password ? <AlertCircle size={18} color="#ef4444" /> : regForm.password.length >= 8 ? <CheckCircle2 size={18} color="#10b981" /> : null}
+                  </div>
+                </div>
+                {regForm.password && (
+                  <>
+                    <div className={styles.strengthMeter}>
+                      <div className={styles.strengthBar} style={{ width: `${strength.score}%`, backgroundColor: strength.color }} />
+                    </div>
+                    <div className={styles.strengthText} style={{ color: strength.color }}>{strength.label}</div>
+                  </>
+                )}
               </div>
 
-              <div style={{ background: 'var(--bg-card)', padding: '40px', border: '1px solid var(--border-slate)' }}>
-                <h3 className={styles.dataLabel}>Communication Channels</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                  <div style={{ display: 'flex', gap: '16px' }}>
-                    <MapPin size={20} color="var(--accent-teal)" />
-                    <div>
-                      <div className={styles.dataLabel}>Location</div>
-                      <p style={{ fontWeight: '600', color: 'var(--text-warm)' }}>{selectedBusiness.address}</p>
-                      <p className={styles.mono} style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{cities.find(c => c.id === selectedBusiness.city_id)?.name} / {selectedBusiness.city_id}</p>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '16px' }}>
-                    <Phone size={20} color="var(--accent-teal)" />
-                    <div>
-                      <div className={styles.dataLabel}>Direct Line</div>
-                      <p className={styles.mono} style={{ fontWeight: '600', color: 'var(--text-warm)' }}>{selectedBusiness.phone}</p>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '16px' }}>
-                    <Globe size={20} color="var(--accent-teal)" />
-                    <div>
-                      <div className={styles.dataLabel}>Web Access</div>
-                      <a href={selectedBusiness.website} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-gold)', textDecoration: 'none', fontWeight: 'bold', borderBottom: '1px solid var(--brand-gold)' }}>
-                        ESTABLISH CONNECTION
-                      </a>
-                    </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>تأكيد كلمة المرور Confirm</label>
+                <div className={styles.inputWrapper}>
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="Repeat password"
+                    className={`${styles.formInput} ${regErrors.confirmPassword ? styles.formInputError : (regForm.confirmPassword && !regErrors.confirmPassword) ? styles.formInputSuccess : ''}`}
+                    value={regForm.confirmPassword}
+                    onChange={(e) => {
+                      setRegForm({...regForm, confirmPassword: e.target.value});
+                      validateRegField('confirmPassword', e.target.value);
+                    }}
+                  />
+                  <div className={styles.validationIcon}>
+                    {regErrors.confirmPassword ? <AlertCircle size={18} color="#ef4444" /> : (regForm.confirmPassword && !regErrors.confirmPassword) ? <CheckCircle2 size={18} color="#10b981" /> : null}
                   </div>
                 </div>
               </div>
             </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>رقم الهاتف Phone Number</label>
+                <div className={styles.inputWrapper}>
+                  <input 
+                    type="tel" 
+                    placeholder="+964..."
+                    className={`${styles.formInput} ${regErrors.phone ? styles.formInputError : regForm.phone.length >= 10 ? styles.formInputSuccess : ''}`}
+                    value={regForm.phone}
+                    onChange={(e) => {
+                      setRegForm({...regForm, phone: e.target.value});
+                      validateRegField('phone', e.target.value);
+                    }}
+                  />
+                  <div className={styles.validationIcon}>
+                    {regErrors.phone ? <AlertCircle size={18} color="#ef4444" /> : regForm.phone.length >= 10 ? <CheckCircle2 size={18} color="#10b981" /> : null}
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>المحافظة City</label>
+                <div className={styles.inputWrapper}>
+                  <select 
+                    className={`${styles.formInput} ${regErrors.city ? styles.formInputError : regForm.city ? styles.formInputSuccess : ''}`}
+                    value={regForm.city}
+                    onChange={(e) => {
+                      setRegForm({...regForm, city: e.target.value});
+                      validateRegField('city', e.target.value);
+                    }}
+                    style={{ appearance: 'none' }}
+                  >
+                    <option value="">Select City</option>
+                    {cities.map(city => (
+                      <option key={city.id} value={city.id}>{city.name}</option>
+                    ))}
+                  </select>
+                  <div className={styles.validationIcon}>
+                    {regErrors.city ? <AlertCircle size={18} color="#ef4444" /> : regForm.city ? <CheckCircle2 size={18} color="#10b981" /> : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>الدور Role</label>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  type="button"
+                  className={`${styles.btn} ${regForm.role === 'User' ? styles.btnPrimary : styles.btnDark}`}
+                  style={{ flex: 1, fontSize: '12px' }}
+                  onClick={() => setRegForm({...regForm, role: 'User'})}
+                >
+                  User / مستخدم
+                </button>
+                <button 
+                  type="button"
+                  className={`${styles.btn} ${regForm.role === 'Business Owner' ? styles.btnPrimary : styles.btnDark}`}
+                  style={{ flex: 1, fontSize: '12px' }}
+                  onClick={() => setRegForm({...regForm, role: 'Business Owner'})}
+                >
+                  Owner / صاحب عمل
+                </button>
+              </div>
+            </div>
+
+            {regForm.role === 'Business Owner' && (
+              <div className={styles.formGroup} style={{ animation: 'fadeIn 0.3s ease' }}>
+                <label className={styles.formLabel}>اسم العمل Business Name (Optional)</label>
+                <div className={styles.inputWrapper}>
+                  <input 
+                    type="text" 
+                    placeholder="Your establishment name"
+                    className={styles.formInput}
+                    value={regForm.businessName}
+                    onChange={(e) => setRegForm({...regForm, businessName: e.target.value})}
+                  />
+                </div>
+              </div>
+            )}
+
+            <button 
+              type="submit" 
+              className={styles.submitBtn}
+              disabled={!isRegFormValid() || authLoading}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+            >
+              {authLoading ? <Loader2 className={styles.spinner} size={20} /> : 'COMPLETE REGISTRATION'}
+            </button>
+          </form>
+
+          <div style={{ marginTop: '32px', textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
+            Already have clearance? <span style={{ color: 'var(--brand-gold)', cursor: 'pointer' }}>Sign In</span>
+          </div>
+        </div>
+
+        {registrationSuccess && (
+          <div className={styles.welcomeOverlay}>
+            <div className={styles.welcomeContent}>
+              <div style={{ display: 'inline-flex', padding: '24px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', marginBottom: '32px', color: '#10b981' }}>
+                <ShieldCheck size={64} />
+              </div>
+              <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--text-warm)', marginBottom: '16px' }}>Welcome, {regForm.fullName}!</h1>
+              <p style={{ fontSize: '1.125rem', color: 'var(--text-muted)', lineHeight: '1.6' }} className={styles.mono}>
+                YOUR ACCESS PROTOCOLS HAVE BEEN INITIALIZED.<br />
+                REDIRECTING TO SECURE DASHBOARD...
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+  const renderDetailModal = () => {
+    if (!selectedBusiness) return null;
+    const category = categories.find(c => c.id === selectedBusiness.category_id);
+    const city = cities.find(c => c.id === selectedBusiness.city_id);
+
+    const handleShare = () => {
+      if (navigator.share) {
+        navigator.share({
+          title: selectedBusiness.name,
+          text: selectedBusiness.description,
+          url: window.location.href,
+        }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+      }
+    };
+
+    return (
+      <div className={styles.modalOverlay} onClick={() => setSelectedBusiness(null)}>
+        <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+          <button className={styles.closeBtn} onClick={() => setSelectedBusiness(null)}>
+            <X size={20} />
+          </button>
+
+          <div className={styles.modalHeader}>
+            <div className={styles.modalIconLarge}>
+              {category?.icon}
+            </div>
+            <h2 className={styles.modalTitle}>{selectedBusiness.name}</h2>
+            <div className={styles.modalBadge}>{category?.name}</div>
+          </div>
+
+          <div className={styles.modalSection}>
+            <h3 className={styles.modalSectionTitle}>Contact Information</h3>
+            <div className={styles.contactGrid}>
+              <a href={`tel:${selectedBusiness.phone}`} className={styles.contactItem}>
+                <Phone size={16} color="var(--brand-gold)" />
+                <span>{selectedBusiness.phone}</span>
+              </a>
+              {selectedBusiness.email && (
+                <a href={`mailto:${selectedBusiness.email}`} className={styles.contactItem}>
+                  <Mail size={16} color="var(--brand-gold)" />
+                  <span>{selectedBusiness.email}</span>
+                </a>
+              )}
+              {selectedBusiness.website && (
+                <a href={selectedBusiness.website} target="_blank" rel="noopener noreferrer" className={styles.contactItem}>
+                  <Globe size={16} color="var(--brand-gold)" />
+                  <span>{selectedBusiness.website.replace(/^https?:\/\//, '')}</span>
+                  <ExternalLink size={12} style={{ opacity: 0.5 }} />
+                </a>
+              )}
+              <div className={styles.contactItem}>
+                <MapPin size={16} color="var(--brand-gold)" />
+                <span>{selectedBusiness.address}, {city?.name}</span>
+              </div>
+            </div>
+
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedBusiness.address + ', ' + city?.name + ', Iraq')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.mapBtn}
+            >
+              📍 View on Map
+            </a>
+          </div>
+
+          <div className={styles.modalSection}>
+            <h3 className={styles.modalSectionTitle}>Entity Profile</h3>
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Rating</span>
+                <span className={styles.infoValue} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Star size={14} color="var(--brand-gold)" fill="var(--brand-gold)" />
+                  {selectedBusiness.rating.toFixed(1)}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Node ID</span>
+                <span className={`${styles.infoValue} ${styles.mono}`} style={{ fontSize: '11px' }}>{selectedBusiness.id}</span>
+              </div>
+              <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                <span className={styles.infoLabel}>Description (EN)</span>
+                <span className={styles.infoValue}>{selectedBusiness.description}</span>
+              </div>
+              <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                <span className={styles.infoLabel}>الوصف (AR)</span>
+                <span className={`${styles.infoValue} ${styles.arabic}`} style={{ fontSize: '1.1rem' }}>{selectedBusiness.description_ar}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.modalFooter}>
+            <button className={`${styles.btn} ${styles.btnPrimary}`} style={{ flex: 1 }} onClick={handleShare}>
+              Share Node
+            </button>
+            <button className={`${styles.btn} ${styles.btnDark}`} style={{ flex: 1 }} onClick={() => setSelectedBusiness(null)}>
+              Close
+            </button>
           </div>
         </div>
       </div>
@@ -547,8 +1990,33 @@ export default function App() {
                 <Globe2 size={16} />
                 <span>{language}</span>
               </button>
-              <button className={styles.navBtn}>Login</button>
-              <button className={`${styles.navBtn} ${styles.navBtnPrimary}`}>Register</button>
+              {user ? (
+                <>
+                  {isBusinessOwner && (
+                    <button 
+                      className={`${styles.navBtn} ${styles.navBtnPrimary}`}
+                      onClick={() => setView('dashboard')}
+                    >
+                      Dashboard
+                    </button>
+                  )}
+                  <div className={styles.userBadge}>
+                    <User size={14} />
+                    <span>{user.email.split('@')[0]}</span>
+                  </div>
+                  <button className={styles.navBtn} onClick={handleLogout}>Logout</button>
+                </>
+              ) : (
+                <>
+                  <button className={styles.navBtn} onClick={() => setView('login')}>Login</button>
+                  <button 
+                    className={`${styles.navBtn} ${styles.navBtnPrimary}`}
+                    onClick={() => setView('register')}
+                  >
+                    Register
+                  </button>
+                </>
+              )}
             </div>
             
             <button 
@@ -571,8 +2039,33 @@ export default function App() {
                 <Globe2 size={18} />
                 <span>Language: {language}</span>
               </button>
-              <button className={styles.mobileMenuBtn}>Login</button>
-              <button className={`${styles.mobileMenuBtn} ${styles.mobileMenuBtnPrimary}`}>Register</button>
+              {user ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div className={styles.mobileUserBadge}>
+                    <User size={18} />
+                    <span>{user.email}</span>
+                  </div>
+                  {isBusinessOwner && (
+                    <button 
+                      className={`${styles.mobileMenuBtn} ${styles.mobileMenuBtnPrimary}`}
+                      onClick={() => { setView('dashboard'); setIsMenuOpen(false); }}
+                    >
+                      Dashboard
+                    </button>
+                  )}
+                  <button className={styles.mobileMenuBtn} onClick={handleLogout}>Logout</button>
+                </div>
+              ) : (
+                <>
+                  <button className={styles.mobileMenuBtn} onClick={() => { setView('login'); setIsMenuOpen(false); }}>Login</button>
+                  <button 
+                    className={`${styles.mobileMenuBtn} ${styles.mobileMenuBtnPrimary}`}
+                    onClick={() => { setView('register'); setIsMenuOpen(false); }}
+                  >
+                    Register
+                  </button>
+                </>
+              )}
               <div className={styles.mobileNavLinks}>
                 <button onClick={() => { setView('home'); setIsMenuOpen(false); }}>Dashboard</button>
                 <button onClick={() => { setView('list'); setSelectedCategory(null); setIsMenuOpen(false); }}>Database</button>
@@ -585,14 +2078,21 @@ export default function App() {
       {/* Main Content */}
       <main style={{ padding: '40px 0' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '100px 0' }}>
-            <p style={{ color: '#999' }}>Loading Iraq Compass...</p>
+          <div className={styles.loadingOverlay}>
+            <div className={styles.loadingSpinner} />
+            <div className={styles.loadingText}>Initializing Intelligence Feed...</div>
+            <div className={styles.loadingProgress}>
+              جاري التحميل... {loadingProgress.toLocaleString()} سجل
+            </div>
           </div>
         ) : (
           <div>
             {view === 'home' && renderHome()}
             {view === 'list' && renderList()}
-            {view === 'detail' && renderDetail()}
+            {view === 'register' && renderRegister()}
+            {view === 'login' && renderLogin()}
+            {view === 'dashboard' && renderDashboard()}
+            {renderDetailModal()}
           </div>
         )}
       </main>
